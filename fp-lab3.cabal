@@ -25,7 +25,8 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Interpolate
+      Parsing
   other-modules:
       Paths_fp_lab3
   autogen-modules:
