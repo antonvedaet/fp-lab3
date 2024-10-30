@@ -2,7 +2,7 @@
 module Parsing
     ( parseArgs,
       parseLine,
-      readInput,
+      readPoint,
       Config(..)
     ) where
 
@@ -32,6 +32,9 @@ parseLine line = case words (map replaceComma line) of
                   replaceComma ',' = ' '
                   replaceComma c = c
 
-readInput :: IO [(Double, Double)]
-readInput = do
-        mapMaybe parseLine . lines <$> getContents
+readPoint :: IO (Double, Double)
+readPoint = do
+    line <- getLine
+    case parseLine line of
+        Just p  -> return p
+        Nothing -> putStrLn "Неверный ввод, попробуйте снова:" >> readPoint

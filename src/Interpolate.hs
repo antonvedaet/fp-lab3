@@ -5,33 +5,44 @@ module Interpolate (
   processData
 ) where
 
-import Parsing (Config (..))
+import System.IO (hFlush, stdout)
+import Parsing (Config (..), readPoint)
 import Text.Printf (printf)
-import Data.List (sortOn)
+import Control.Monad (when)
 
 lagrange :: Double -> [(Double, Double)] -> Double
 lagrange x points = sum [y_i * product [(x - x_j) / (x_i - x_j) | (x_j, _) <- points, x_i /= x_j] | (x_i, y_i) <- points]
 
-lagrangeInterpolate :: [(Double, Double)] -> [Double] -> [(Double, Double)]
-lagrangeInterpolate points xs = [(x, lagrange x points) | x <- xs]
+linearInterpolate :: Double -> (Double, Double) -> (Double, Double) -> [Double]
+linearInterpolate step (x1, y1) (x2, y2) =
+    let xs = takeWhile (< x2 + step) [x1, x1 + step ..]
+    in map (\x -> y1 + (y2 - y1) * (x - x1) / (x2 - x1)) xs
 
-linearInterpolate :: (Double, Double) -> (Double, Double) ->  [Double] -> [(Double, Double)]
-linearInterpolate (x0, y0) (x1, y1) xs =
-        let slope = (y1 - y0) / (x1 - x0)
-        in [(x, y0 + slope * (x - x0)) | x <- xs, x >= x0, x<=x1]
+lagrangeInterpolate :: Double -> [(Double, Double)] -> [Double]
+lagrangeInterpolate step points =
+    let xs = [fst (head points), fst (head points) + step .. fst (last points) + step]
+    in map (\x -> lagrange x points) xs
 
-printResult :: String -> (Double, Double) -> IO ()
-printResult alg (x, y) = printf "%s: %.2f\t%.2f\n" alg x y
+printResult :: [Double] -> IO ()
+printResult = mapM_ (putStrLn . printf "%.2f")
 
 processData :: Config -> [(Double, Double)] -> IO ()
 processData config points = do
-        let sortedPoints = sortOn fst points
-            xs = [fst (head sortedPoints), fst (head sortedPoints) + samplingRate config .. fst (last sortedPoints)]
-            linearResults = if "linear" `elem` algorithms config
-                            then concat [linearInterpolate p1 p2 xs | (p1, p2) <- zip sortedPoints(tail sortedPoints)]
-                            else []
-            lagrangeResults = if "lagrange" `elem` algorithms config
-                              then lagrangeInterpolate sortedPoints xs
-                              else []
-        mapM_ (printResult "Линейная") linearResults
-        mapM_ (printResult "Лагранжева") lagrangeResults
+    let numPoints = length points
+
+    when (numPoints >= 2) $ do
+        let recentPoints = take 2 $ reverse points
+        putStrLn $ "Линейная от " ++ show (fst (head recentPoints)) ++ " с шагом " ++ show (samplingRate config)
+        let linResult = linearInterpolate (samplingRate config) (recentPoints !! 1) (recentPoints !! 0)
+        printResult linResult
+
+    when (numPoints >= 4) $ do
+        let recentPoints = take 4 $ reverse points
+        putStrLn $ "Лагранж от " ++ show (fst (last $ recentPoints)) ++ " с шагом " ++ show (samplingRate config)
+        let lagResult = lagrangeInterpolate (samplingRate config) (reverse recentPoints)
+        printResult lagResult
+
+    putStrLn "Введите новую точку (x y):"
+    hFlush stdout
+    newPoint <- readPoint
+    processData config (points ++ [newPoint])
