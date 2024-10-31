@@ -6,7 +6,7 @@ module Parsing
       Config(..)
     ) where
 
-import Data.Maybe (mapMaybe, Maybe)
+import Data.Maybe (mapMaybe)
 import Text.Read (readMaybe)
 
 data Config where
