@@ -1,2 +1,14 @@
+import Test.HUnit
+import ParsingSpec
+import InterpolateSpec
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = do
+  _ <-
+    runTestTT $
+        TestList
+            [ testParseArgs
+            , testParseLine
+            , testLagrange
+            , testLinearInterpolation]
+  return ()
