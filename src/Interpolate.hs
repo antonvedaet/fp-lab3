@@ -24,7 +24,7 @@ lagrangeInterpolate step points =
     in map (\x -> lagrange x points) xs
 
 printResult :: [Double] -> IO ()
-printResult = mapM_ (putStrLn . printf "%.2f")
+printResult = mapM_ (putStr . printf "  %.2f")
 
 processData :: Config -> [(Double, Double)] -> IO ()
 processData config points = do
@@ -38,11 +38,11 @@ processData config points = do
 
     when (numPoints >= 4) $ do
         let recentPoints = take 4 $ reverse points
-        putStrLn $ "Лагранж от " ++ show (fst (last $ recentPoints)) ++ " с шагом " ++ show (samplingRate config)
+        putStrLn $ "\nЛагранж от " ++ show (fst (last $ recentPoints)) ++ " с шагом " ++ show (samplingRate config)
         let lagResult = lagrangeInterpolate (samplingRate config) (reverse recentPoints)
         printResult lagResult
 
-    putStrLn "Введите новую точку (x y):"
+    putStrLn "\nВведите новую точку (x y):"
     hFlush stdout
     newPoint <- readPoint
     processData config (points ++ [newPoint])
